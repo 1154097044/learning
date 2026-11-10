@@ -1,0 +1,14 @@
+# prod 环境配置：用 --spring.profiles.active=prod 激活时覆盖 application.yml 同名项
+# 对照 Android：相当于 release buildType / productFlavor 覆盖默认配置
+app:
+  # 生产环境走邮件渠道
+  notify-channel: email
+  name: week1
+  timeout-ms: 8000
+  whitelist:
+    - alic
+    - bob
+    - carol
+
+server:
+  port: 8086

@@ -1,0 +1,25 @@
+server:
+  port: 8084
+
+spring:
+  application:
+    name: week3-data-mp
+  datasource:
+    # MP 版用独立库 learn_mp（与 JPA 版 learn 分开，Flyway 版本历史互不干扰）
+    # 建库命令：docker exec -it mysql mysql -uroot -proot -e "CREATE DATABASE IF NOT EXISTS learn_mp CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;"
+    url: jdbc:mysql://localhost:3306/learn_mp?useUnicode=true&characterEncoding=utf8&serverTimezone=Asia/Shanghai
+    username: root
+    password: root
+    driver-class-name: com.mysql.cj.jdbc.Driver
+  flyway:
+    enabled: true
+    locations: classpath:db/migration
+
+#Mybatis-Plus 配置：打印每句 SQL(对照JPA版的show-sql,效果一样)
+mybatis-plus:
+  configuration:
+    log-impl: org.apache.ibatis.logging.stdout.StdOutImpl
+    map-underscore-to-camel-case: true  # 下划线列名 ↔ 驼峰字段（userId ↔ user_id）
+logging:
+  level:
+    com.xy.learning.week3mp: INFO

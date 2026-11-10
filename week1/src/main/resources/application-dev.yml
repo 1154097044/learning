@@ -1,0 +1,13 @@
+# 通知渠道，决定装配 SmsNotificationService 还是 EmailNotificationService
+# 改成 email 再启动，观察 /api/config 返回的 notifyChannelImpl 变化
+app:
+  notify-channel: sms
+  # Demo 1-2：@ConfigurationProperties(prefix = "app") 绑定到 AppProperties
+  name: week1
+  timeout-ms: 3000
+  whitelist:
+    - alice
+    - bob
+
+server:
+  port: 8082
