@@ -22,6 +22,7 @@
         <module>week3-data</module>
         <module>week3-data-mp</module>
         <module>week3-tx</module>
+        <module>week3-rel</module>
     </modules>
 
 
