@@ -1,0 +1,68 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.xy.learning.week3mybatis.mapper.TodoMapper">
+    <resultMap id="todoMap" type="Todo">
+        <id property="id" column="id"/>
+        <result property="userId" column="user_id"/>
+        <result property="title" column="title"/>
+        <result property="description" column="description"/>
+        <result property="done" column="done"/>
+        <result property="createdAt" column="created_at"/>
+    </resultMap>
+
+    <sql id="columns">id,user_id,title,description,done,created_at</sql>
+
+    <!-- COUNT 与列表复用同一段筛选，防止total和items的口径不一致。
+         where 会自动移除开头的 AND；false是有效筛选，不能写done == true。
+         #{...}是预编译参数，不用 ${...} 并接用户输入，避免SQL注入。
+         LIKE 中 % 和 _ 仍是通配符，本例不做字面量转义。 -->
+    <sql id="filters">
+        <where>
+            <if test="userId != null">AND user_id = #{userId}</if>
+            <if test="done != null">AND done = #{done}</if>
+            <if test="keyword != null and keyword !+ ''">
+                AND title LIKE CONCAT('%',#{keyword},'%')
+            </if>
+        </where>
+    </sql>
+
+    <insert id="insert" useGeneratedKeys="true" keyProperty="id" keyColumn="id">
+        INSERT INTO app_todo (user_id,title,description,done,created_at)
+        VALUES (#{userId},#{title},#{description},#{done},#{createdAt})
+    </insert>
+    <select id="findById" resultMap="todoMap">
+        SELECT <include refid="columns"/> FROM app_todo WHERE id = #{id}
+    </select>
+
+    <!-- PUT 完整替换可将description 置 NULL；created_at 不参与更新，保留原创时间。 -->
+    <update id="update">
+        UPDATE app_todo
+        SET user_id = #{userId},title = #{title},
+            description = #{description,jdbcType=VARCHAR},done = #{done}
+        WHERE id = #{id}
+    </update>
+    <delete id="deleteById">
+        DELETE FROM app_todo WHERE id = #{id}
+    </delete>
+    <select id="count" resultType="long">
+        SELECT COUNT(*) FROM app_todo <include refid="filters"/>
+    </select>
+    <!-- 页码换算在 Service：offset=(page-1)*size;固定 ORDER BY 保证翻页顺序-->
+    <select id="findPage" resultMap="todoMap">
+        SELECT <include refid="columns"/> FROM app_todo
+        <include refid="filters"/>
+        ORDER BY id LIMIT #{size} OFFSET #{offset}
+    </select>
+    <select id="findByUserId" resultMap="todoMap">
+        SELECT <include refid="columns"/> FROM app_todo WHERE user_id = #{userId} ORDER BY id
+    </select>
+
+    <!-- foreach 生成 IN (?,?,...)，不是拼接一串逗号文本。输入必须为非空集合。 -->
+    <update id="updateDoneBatch">
+        UPDATE app_todo SET done = #{done}
+        WHERE id IN
+        <foreach collection="ids" item="id" open="(" separator="," close=")">
+            #{id}
+        </foreach>
+    </update>
+</mapper>

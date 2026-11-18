@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTO Mapper 3.0//EN" "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.xy.learning.week3mybatis.mapper.UserMapper">
+    <resultMap id="userMap" type="User">
+        <id property="id" column="id"/>
+        <result property="name" column="name"/>
+        <result property="email" column="email"/>
+    </resultMap>
+
+    <!-- JOIN 后有两种 id，必须起别名。父子双方的id用于多行折叠为一个用户 -->
+    <resultMap id="userWithTodosMap" type="User" autoMapping="false">
+        <id property="id" column="u_id"/>
+        <result property="name" column="u_name"/>
+        <result property="email" column="u_email"/>
+        <!-- 不用嵌套 select：直接从本次 JOIN 的行中组装，只有一条SQL。
+             notNullColumn 防止 Carol 的 NULL 子表行被组装成一条空 Todo。-->
+        <collection property="todos" ofType="Todo" notNullColumn="t_id" autoMapping="false">
+            <id property="id" column="t_id"/>
+            <result property="userId" column="t_user_id"/>
+            <result property="title" column="t_title"/>
+            <result property="description" column="t_description"/>
+            <result property="done" column="t_done"/>
+            <result property="createdAt" column="t_created_at"/>
+        </collection>
+    </resultMap>
+
+    <resultMap id="countMap" type="UserTodoCount">
+        <id property="userId" column="user_id"/>
+        <result property="name" column="name"/>
+        <result property="todoCount" column="todo_count"/>
+    </resultMap>
+
+    <!-- 不传 id，交给数据库自增。useGeneratedKeys 把生成的主键回填到 user.id。 -->
+    <insert id="insert" useGeneratedKeys="true" keyProperty="id" keyColumn="id">
+        INSERT INTO app_user (name,email) VALUES (#{name},#{email})
+    </insert>
+
+    <select id="findById" resultMap="userMap">
+        SELECT id, name ,email FROM app_user WHERE id = #{id}
+    </select>
+    <select id="findByEmail" resultMap="userMap">
+        SELECT id,name ,email FROM app_user WHERE email = #{email}
+    </select>
+    <select id="findAll" resultMap="userMap">
+        SELECT id,name,email FROM app_user ORDER BY id
+    </select>
+    <select id="findAllWithTodos" resultMap="userWithTodosMap">
+        SELECT u.id AS u_id,u.name AS u_name,u.email AS u_email,
+               t.id AS t_id,t.user_id AS t_user_id,t.title AS t_title,
+               t.description AS t_description,t.done AS t_done,t.created_at AS t_created_at
+        FROM app_user u
+        LEFT JOIN app_todo t ON t.user_id = u.id
+        ORDER BY u.id,t.id
+    </select>
+
+    <!-- COUNT(t.id) 而非 COUNT(*)：无待办的用户也有一行 JOIN 结果，但应计为 0。 -->
+    <select id="countTodosPerUser" resultMap="countMap">
+        SELECT u.id AS user_id,u.name,COUNT(t.id) AS todo_count
+        FROM app_user u
+        LEFT JOIN app_todo t ON t.user_id = u.id
+        GROUP BY u.id,u.name
+        ORDER BY u.id
+    </select>
+</mapper>

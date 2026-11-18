@@ -23,6 +23,7 @@
         <module>week3-data-mp</module>
         <module>week3-tx</module>
         <module>week3-rel</module>
+        <module>week3-mybatis</module>
     </modules>
 
 
